@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+/** Monthly and yearly income/expense reports, scoped to the logged-in user. */
 @RestController
 @RequestMapping("/api/reports")
 class ReportController(
     private val reportService: ReportService
 ) {
 
+    /** `GET /api/reports/monthly/{year}/{month}` - income/expense breakdown for one calendar month. */
     @GetMapping("/monthly/{year}/{month}")
     fun getMonthlyReport(
         @PathVariable year: Int,
@@ -25,6 +27,7 @@ class ReportController(
         return ResponseEntity.ok(reportService.getMonthlyReport(userId, year, month))
     }
 
+    /** `GET /api/reports/yearly/{year}` - income/expense breakdown for one calendar year. */
     @GetMapping("/yearly/{year}")
     fun getYearlyReport(@PathVariable year: Int): ResponseEntity<YearlyReportResponse> {
         val userId = SecurityUtils.currentUserId()

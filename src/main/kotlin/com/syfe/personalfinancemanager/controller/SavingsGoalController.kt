@@ -19,12 +19,18 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+/**
+ * Full CRUD for savings goals. Every read endpoint here returns
+ * freshly calculated progress - see
+ * [com.syfe.personalfinancemanager.service.SavingsGoalService.calculateProgress].
+ */
 @RestController
 @RequestMapping("/api/goals")
 class SavingsGoalController(
     private val savingsGoalService: SavingsGoalService
 ) {
 
+    /** `POST /api/goals` - creates a savings goal for the caller. */
     @PostMapping
     fun createGoal(@Valid @RequestBody request: CreateGoalRequest): ResponseEntity<GoalResponse> {
         val userId = SecurityUtils.currentUserId()
@@ -32,18 +38,21 @@ class SavingsGoalController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
+    /** `GET /api/goals` - lists all of the caller's goals with live progress. */
     @GetMapping
     fun getAllGoals(): ResponseEntity<GoalListResponse> {
         val userId = SecurityUtils.currentUserId()
         return ResponseEntity.ok(savingsGoalService.getAllGoals(userId))
     }
 
+    /** `GET /api/goals/{id}` - fetches one of the caller's goals with live progress. */
     @GetMapping("/{id}")
     fun getGoal(@PathVariable id: Long): ResponseEntity<GoalResponse> {
         val userId = SecurityUtils.currentUserId()
         return ResponseEntity.ok(savingsGoalService.getGoal(userId, id))
     }
 
+    /** `PUT /api/goals/{id}` - updates target amount and/or target date on one of the caller's own goals. */
     @PutMapping("/{id}")
     fun updateGoal(
         @PathVariable id: Long,
@@ -53,6 +62,7 @@ class SavingsGoalController(
         return ResponseEntity.ok(savingsGoalService.updateGoal(userId, id, request))
     }
 
+    /** `DELETE /api/goals/{id}` - deletes one of the caller's own goals. */
     @DeleteMapping("/{id}")
     fun deleteGoal(@PathVariable id: Long): ResponseEntity<MessageResponse> {
         val userId = SecurityUtils.currentUserId()

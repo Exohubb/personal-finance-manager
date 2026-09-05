@@ -3,6 +3,7 @@ package com.syfe.personalfinancemanager.dto
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 
+/** Request body for `POST /api/auth/register`. */
 data class RegisterRequest(
     @field:NotBlank(message = "Username is required")
     @field:Email(message = "Username must be a valid email address")
@@ -23,6 +24,7 @@ data class RegisterResponse(
     val userId: Long
 )
 
+/** Request body for `POST /api/auth/login`. */
 data class LoginRequest(
     @field:NotBlank(message = "Username is required")
     val username: String,

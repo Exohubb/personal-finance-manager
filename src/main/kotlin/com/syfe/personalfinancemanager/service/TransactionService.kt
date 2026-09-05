@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
+/** Business logic for creating, listing, updating, and deleting transactions. */
 @Service
 class TransactionService(
     private val transactionRepository: TransactionRepository,
@@ -23,6 +24,13 @@ class TransactionService(
     private val userRepository: UserRepository
 ) {
 
+    /**
+     * Creates a transaction for the given user. The transaction's
+     * [com.syfe.personalfinancemanager.entity.TransactionType] is derived
+     * automatically from the chosen category, not supplied by the caller.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if the date is malformed, in the future, or the category doesn't exist or isn't accessible to this user
+     */
     fun createTransaction(userId: Long, request: CreateTransactionRequest): TransactionResponse {
         val date = parseDate(request.date)
 
@@ -48,6 +56,14 @@ class TransactionService(
         return saved.toResponse()
     }
 
+    /**
+     * Lists a user's transactions, newest first, optionally narrowed down
+     * by any combination of date range, category name, and transaction
+     * type. Every filter parameter is optional; passing all as `null`
+     * returns the user's full transaction history.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if a supplied date is malformed or [type] isn't `INCOME`/`EXPENSE`
+     */
     fun getTransactions(
         userId: Long,
         startDate: String?,
@@ -79,6 +95,16 @@ class TransactionService(
         return TransactionListResponse(transactions.map { it.toResponse() })
     }
 
+    /**
+     * Updates a transaction's amount, category, and/or description.
+     *
+     * The transaction's date can never be changed through this method -
+     * [UpdateTransactionRequest] has no date field at all, so there's
+     * nothing for a caller to send that would affect it either way.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.ResourceNotFoundException if no transaction with this id exists for this user
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if a new category is supplied but doesn't exist or isn't accessible to this user
+     */
     @Transactional
     fun updateTransaction(userId: Long, id: Long, request: UpdateTransactionRequest): TransactionResponse {
         val transaction = transactionRepository.findByIdAndUserId(id, userId)
@@ -96,6 +122,15 @@ class TransactionService(
         return transaction.toResponse()
     }
 
+    /**
+     * Permanently deletes a transaction. This is a hard delete, not a
+     * soft-delete flag - once removed, the transaction is immediately
+     * excluded from every savings goal's progress calculation and every
+     * report, since those read directly from the transactions that
+     * currently exist.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.ResourceNotFoundException if no transaction with this id exists for this user
+     */
     fun deleteTransaction(userId: Long, id: Long) {
         val transaction = transactionRepository.findByIdAndUserId(id, userId)
             .orElseThrow { ResourceNotFoundException("Transaction not found: $id") }

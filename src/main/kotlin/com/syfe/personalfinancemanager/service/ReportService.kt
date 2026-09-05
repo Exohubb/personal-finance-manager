@@ -12,11 +12,18 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 
+/** Builds monthly and yearly income/expense summaries from a user's transactions. */
 @Service
 class ReportService(
     private val transactionRepository: TransactionRepository
 ) {
 
+    /**
+     * Builds an income/expense breakdown for a single calendar month,
+     * grouped by category name, with a net savings total.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if [month] is outside the 1-12 range
+     */
     fun getMonthlyReport(userId: Long, year: Int, month: Int): MonthlyReportResponse {
         if (month < 1 || month > 12) {
             throw BadRequestException("Month must be between 1 and 12")
@@ -29,6 +36,11 @@ class ReportService(
         return buildMonthlyReport(month, year, transactions)
     }
 
+    /**
+     * Builds an income/expense breakdown for a full calendar year,
+     * grouped by category name, with a net savings total. Uses the same
+     * aggregation logic as [getMonthlyReport], just across the whole year.
+     */
     fun getYearlyReport(userId: Long, year: Int): YearlyReportResponse {
         val start = LocalDate.of(year, 1, 1)
         val end = LocalDate.of(year, 12, 31)

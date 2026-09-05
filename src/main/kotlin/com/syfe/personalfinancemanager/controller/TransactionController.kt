@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+/** Full CRUD for income/expense transactions, scoped to the logged-in user. */
 @RestController
 @RequestMapping("/api/transactions")
 class TransactionController(
     private val transactionService: TransactionService
 ) {
 
+    /** `POST /api/transactions` - creates a transaction for the caller. */
     @PostMapping
     fun createTransaction(@Valid @RequestBody request: CreateTransactionRequest): ResponseEntity<TransactionResponse> {
         val userId = SecurityUtils.currentUserId()
@@ -33,6 +35,12 @@ class TransactionController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
+    /**
+     * `GET /api/transactions` - lists the caller's transactions, newest
+     * first. All query parameters are optional and may be combined:
+     * [startDate]/[endDate] (`YYYY-MM-DD`), [category] (by name), and
+     * [type] (`INCOME` or `EXPENSE`).
+     */
     @GetMapping
     fun getTransactions(
         @RequestParam(required = false) startDate: String?,
@@ -45,6 +53,12 @@ class TransactionController(
         return ResponseEntity.ok(response)
     }
 
+    /**
+     * `PUT /api/transactions/{id}` - updates amount, category, and/or
+     * description on one of the caller's own transactions. Any `date`
+     * field in the request body is silently ignored - see
+     * [com.syfe.personalfinancemanager.dto.UpdateTransactionRequest].
+     */
     @PutMapping("/{id}")
     fun updateTransaction(
         @PathVariable id: Long,
@@ -55,6 +69,7 @@ class TransactionController(
         return ResponseEntity.ok(response)
     }
 
+    /** `DELETE /api/transactions/{id}` - permanently deletes one of the caller's own transactions. */
     @DeleteMapping("/{id}")
     fun deleteTransaction(@PathVariable id: Long): ResponseEntity<MessageResponse> {
         val userId = SecurityUtils.currentUserId()

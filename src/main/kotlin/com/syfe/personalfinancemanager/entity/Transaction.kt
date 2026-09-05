@@ -12,6 +12,20 @@ import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/**
+ * A single record of money moving in or out for one user, on one date,
+ * against one [Category].
+ *
+ * [amount] is stored as [BigDecimal] rather than a floating point type,
+ * since binary floating point numbers cannot represent every decimal value
+ * exactly and would introduce rounding errors in currency calculations.
+ *
+ * Deleting a transaction is a hard delete (the row is removed outright, see
+ * [com.syfe.personalfinancemanager.service.TransactionService.deleteTransaction]) -
+ * there is no soft-delete flag, because every savings goal progress
+ * calculation and every report reads directly from whichever transaction
+ * rows currently exist.
+ */
 @Entity
 @Table(name = "TRANSACTION")
 class Transaction(
@@ -37,5 +51,10 @@ class Transaction(
     var category: Category = Category(),
 
 ) {
+    /**
+     * The transaction's type, derived from its [category] rather than
+     * stored as its own column - a transaction is always income or an
+     * expense according to whatever category it belongs to.
+     */
     val type get() = category.type
 }

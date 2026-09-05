@@ -19,6 +19,11 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
+/**
+ * Business logic for creating, reading, updating, and deleting savings
+ * goals, including the live progress calculation described on
+ * [calculateProgress].
+ */
 @Service
 class SavingsGoalService(
     private val savingsGoalRepository: SavingsGoalRepository,
@@ -26,6 +31,12 @@ class SavingsGoalService(
     private val userRepository: UserRepository
 ) {
 
+    /**
+     * Creates a savings goal. If [CreateGoalRequest.startDate] is omitted,
+     * it defaults to today.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if the target date isn't in the future, or the start date is after the target date
+     */
     fun createGoal(userId: Long, request: CreateGoalRequest): GoalResponse {
         val targetDate = parseDate(request.targetDate)
 
@@ -53,17 +64,30 @@ class SavingsGoalService(
         return saved.toResponse()
     }
 
+    /** Lists every goal owned by the given user, each with freshly calculated progress. */
     fun getAllGoals(userId: Long): GoalListResponse {
         val goals = savingsGoalRepository.findByUserId(userId)
         return GoalListResponse(goals.map { it.toResponse() })
     }
 
+    /**
+     * Fetches a single goal with freshly calculated progress.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.ResourceNotFoundException if no goal with this id exists for this user
+     */
     fun getGoal(userId: Long, id: Long): GoalResponse {
         val goal = savingsGoalRepository.findByIdAndUserId(id, userId)
             .orElseThrow { ResourceNotFoundException("Goal not found: $id") }
         return goal.toResponse()
     }
 
+    /**
+     * Updates a goal's target amount and/or target date. [goalName] and
+     * [SavingsGoal.startDate] cannot be changed through this method.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.ResourceNotFoundException if no goal with this id exists for this user
+     * @throws com.syfe.personalfinancemanager.exception.BadRequestException if a new target date is supplied but isn't in the future
+     */
     @Transactional
     fun updateGoal(userId: Long, id: Long, request: UpdateGoalRequest): GoalResponse {
         val goal = savingsGoalRepository.findByIdAndUserId(id, userId)
@@ -81,12 +105,25 @@ class SavingsGoalService(
         return goal.toResponse()
     }
 
+    /**
+     * Deletes a goal.
+     *
+     * @throws com.syfe.personalfinancemanager.exception.ResourceNotFoundException if no goal with this id exists for this user
+     */
     fun deleteGoal(userId: Long, id: Long) {
         val goal = savingsGoalRepository.findByIdAndUserId(id, userId)
             .orElseThrow { ResourceNotFoundException("Goal not found: $id") }
         savingsGoalRepository.delete(goal)
     }
 
+    /**
+     * Calculates a goal's progress as `(total income - total expenses)`
+     * across every one of the owning user's transactions dated on or after
+     * [SavingsGoal.startDate]. This is never persisted - it's recalculated
+     * from scratch on every call, so the result always reflects the
+     * current state of the user's transactions with no risk of a cached
+     * value going stale.
+     */
     private fun calculateProgress(goal: SavingsGoal): BigDecimal {
         val transactionsSinceStart = transactionRepository
             .findByUserIdAndDateGreaterThanEqual(goal.user.id!!, goal.startDate)

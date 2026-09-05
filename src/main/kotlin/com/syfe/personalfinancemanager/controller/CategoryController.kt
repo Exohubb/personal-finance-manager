@@ -17,18 +17,21 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+/** Listing, creating, and deleting income/expense categories. */
 @RestController
 @RequestMapping("/api/categories")
 class CategoryController(
     private val categoryService: CategoryService
 ) {
 
+    /** `GET /api/categories` - lists default categories plus the caller's own custom ones. */
     @GetMapping
     fun getAllCategories(): ResponseEntity<CategoryListResponse> {
         val userId = SecurityUtils.currentUserId()
         return ResponseEntity.ok(categoryService.getAllCategoriesForUser(userId))
     }
 
+    /** `POST /api/categories` - creates a custom category owned by the caller. */
     @PostMapping
     fun createCategory(@Valid @RequestBody request: CreateCategoryRequest): ResponseEntity<CategoryResponse> {
         val userId = SecurityUtils.currentUserId()
@@ -36,6 +39,7 @@ class CategoryController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
+    /** `DELETE /api/categories/{name}` - deletes one of the caller's own custom categories, by name. */
     @DeleteMapping("/{name}")
     fun deleteCategory(@PathVariable name: String): ResponseEntity<MessageResponse> {
         val userId = SecurityUtils.currentUserId()

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/** Request body for `POST /api/transactions`. */
 data class CreateTransactionRequest(
     @field:NotNull(message = "Amount is required")
     @field:DecimalMin(value = "0.00", inclusive = false, message = "Amount must be a positive value")
@@ -21,6 +22,11 @@ data class CreateTransactionRequest(
     val description: String? = null
 )
 
+/**
+ * Request body for `PUT /api/transactions/{id}`. Deliberately has no
+ * `date` field - a transaction's date can never be changed after creation,
+ * so there's nothing here for a client to even attempt to modify it with.
+ */
 data class UpdateTransactionRequest(
     @field:DecimalMin(value = "0.00", inclusive = false, message = "Amount must be a positive value")
     val amount: BigDecimal? = null,

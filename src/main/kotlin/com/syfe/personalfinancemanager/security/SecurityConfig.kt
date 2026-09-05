@@ -11,6 +11,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 
+/**
+ * Central Spring Security configuration: session-based authentication,
+ * BCrypt password hashing, and JSON error responses in place of Spring
+ * Security's default HTML-oriented behaviour.
+ */
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(

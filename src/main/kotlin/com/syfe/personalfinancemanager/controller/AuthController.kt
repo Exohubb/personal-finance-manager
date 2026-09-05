@@ -14,18 +14,25 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+/**
+ * Registration, login, and logout. The only controller with endpoints that
+ * are reachable without an existing session (`/register` and `/login`) -
+ * see [com.syfe.personalfinancemanager.security.SecurityConfig].
+ */
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService
 ) {
 
+    /** `POST /api/auth/register` - creates a new account. */
     @PostMapping("/register")
     fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<RegisterResponse> {
         val response = authService.register(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
+    /** `POST /api/auth/login` - verifies credentials and starts a session, returned as a `JSESSIONID` cookie. */
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
@@ -35,6 +42,13 @@ class AuthController(
         return ResponseEntity.ok(MessageResponse("Login successful"))
     }
 
+    /**
+     * `POST /api/auth/logout` - invalidates the current session. Handled
+     * directly here rather than via Spring Security's built-in logout
+     * filter, which is disabled in
+     * [com.syfe.personalfinancemanager.security.SecurityConfig] so this
+     * method actually runs instead of being intercepted beforehand.
+     */
     @PostMapping("/logout")
     fun logout(httpRequest: HttpServletRequest): ResponseEntity<MessageResponse> {
         val session = httpRequest.getSession(false)
